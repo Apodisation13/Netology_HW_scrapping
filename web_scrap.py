@@ -2,7 +2,7 @@ import requests
 from bs4 import BeautifulSoup
 
 
-desired_tags = {'javascript', 'java', 'it-компании', 'python', 'компьютер',  'английский', 'люди'}
+desired_tags = {'мы', 'javascript', 'java', 'python', 'компьютер'}
 
 response = requests.get('https://habr.com/ru/all/')
 if not response.ok:
@@ -21,27 +21,32 @@ for article in soup.find_all('article'):
     head = title.find(class_='post__title_link').text   # заголовок статьи
     # print(head)
 
+    if hubs & desired_tags:
+        print(f'Совпадение по тегу - {hubs & desired_tags}')
+        href = title.find('a').attrs.get('href')  # ссылка на статью
+
+        header = article.find('header', class_='post__meta')
+        time = header.find('span', class_='post__time').text  # время статьи
+
+        print(f'<{time}>, <{head}>, <{href}>')
+        continue
 
     wall = article.find('div', class_='post__body post__body_crop').text  # текст превью статьи
     # print(wall)
 
-    presense_status = False
+    status_match = False
     for hub in desired_tags:
         if hub in wall.lower() or hub in head.lower():
-            presense_status = True
-            match = hub
+            status_match = True
+            print(f"Совпадение в заголовке или в превью - {{'{hub}'}}")
+
+            href = title.find('a').attrs.get('href')  # ссылка на статью
+
+            header = article.find('header', class_='post__meta')
+            time = header.find('span', class_='post__time').text  # время статьи
+
+            print(f'<{time}>, <{head}>, <{href}>')
             break
 
-    if hubs & desired_tags or presense_status:
-        if hubs & desired_tags:
-            print(f'Совпадение по тегу - {hubs & desired_tags}')
-        elif presense_status:
-            print(f"Совпадение в заголовке или в превью - \u007b'{match}'\u007d")
-            # ГОСПОДИ не знаю как {} вставить в ф-строку)))))) не экранируются, пришлось найти код скобок
-
-        href = title.find('a').attrs.get('href')  # ссылка на статью
-        header = article.find('header', class_='post__meta')
-
-        time = header.find('span', class_='post__time').text  # время статьи
-
-        print(f'<{time}>, <{head}>, <{href}>')
+    if status_match:
+        continue
